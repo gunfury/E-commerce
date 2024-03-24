@@ -42,6 +42,7 @@ exports.getUserManagement=async(req,res)=>{
 exports.getProduct=async(req,res)=>{
     try{
         const productModels=await productMdl.find();
+        
         res.render('admin/products',{productModels});
     }catch (error){
         console.error("can't fetch the data");
@@ -102,12 +103,13 @@ exports.getAddCartegory=(req,res)=>{
     const errorMessage=req.flash("errorMessage");
     res.render("admin/addCartegory",{errorMessage:errorMessage});
 }
-
-exports.getAddproduct=async(req,res)=>{
-    try{
-    const items=await cartegoryModel.find();
-    res.render('admin/add-product',{items})
-    }catch(err){
+exports.getAddproduct = async (req, res) => {
+    try {
+       
+        const items = await cartegoryModel.find();
+        const error="";
+        res.render('admin/add-product', { items,error}); // Pass error message to EJS template
+    } catch (err) {
         console.error('Error fetching items', err);
         res.status(500).send('Internal Server Error');
     }
@@ -115,9 +117,10 @@ exports.getAddproduct=async(req,res)=>{
 exports.getEditproduct=async(req,res)=>{
     try{
     const editID=req.params.editId;
+    const error="";
     const currentProductData=await productMdl.findOne({_id:editID})
     const cartegoryProductData=await cartegoryModel.find();
-    res.render('admin/edit-product',{currentProductData,cartegoryProductData});
+    res.render('admin/edit-product',{currentProductData,cartegoryProductData,error});
     }catch (err){
         console.error('Error fetching items', err);
         res.status(500).send('Internal Server Error');
@@ -141,6 +144,20 @@ exports.getDeleteproduct=async(req,res)=>{
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+exports.getSoftDeleteProduct=async(req,res)=>{
+    try{
+    const productId=req.params.id;
+    console.log("productId",productId);
+    const data=await productMdl.findById({_id:productId})
+    console.log("data",data);
+    data.isBlocked=!data.isBlocked;
+    await data.save();
+    res.redirect('/product')
+    }catch(error){
+        console.error("Error adding product:", error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
 
 
 
@@ -155,16 +172,21 @@ exports.postAdminLogin=(req,res)=>{
     const password='8963';
     req.body;
     console.log(req.body);
+    
     if(name===req.body.username&&password===req.body.password){
         req.session.admin = {
             username: req.body.username,
             password: req.body.password
         };
         console.log("adminSession",req.session.admin);
-        res.redirect('/dashboard');
+       return res.redirect('/dashboard');
     }else{
-        res.render('admin/login',{errorMessage:'Invalid user or password'});
+        if(!req.body){
+            return res.render('admin/login',{errorMessage:'Please provide both username and password'});
+         }
+       return res.render('admin/login',{errorMessage:'Invalid user or password'});
     }
+    
 }
 exports.postBlockUser=async(req,res)=>{
     const userId = req.params.Id;
@@ -187,15 +209,19 @@ exports.postAddcategory = async (req, res) => {
         const { Category } = req.body;
         const data=req.body.Category;
         // Check if category already exists
-        if (data.trim() === '' || /[a-z]/.test(data) || /\d/.test(data)) {
-            req.flash('errorMessage', 'Category name should not contain whitespace, lowercase letters, or number');
-            
-            
+        if (data.trim() === '' || /[a-z]/.test(data) || /\d/.test(data)|| /[!@#$%^&*(),.?":{}|<>]/.test(data)) {
+            req.flash('errorMessage', 'Category name should not contain whitespace, lowercase letters, number or special characters');   
             return res.redirect(`/addCartegory`);
         }
+        if(data.length > 15){
+            req.flash('errorMessage', 'Category name should be lessthan or equal to 15 characters long');   
+            return res.redirect(`/addCartegory`);
+        }
+
         const existingCategory = await cartegoryModel.findOne({ Category: Category });
         if (existingCategory) {
-            return res.status(400).json({ success: false, error: 'Category already exists' });
+            req.flash('errorMessage','Category already exists' );
+            return res.redirect(`/addCartegory`);
         }
         // Create a new category document
         const newCategory = new cartegoryModel({ Category: Category });
@@ -216,13 +242,24 @@ exports.postEditCartegory=async(req,res)=>{
     console.log("dataFromGet",dataId);
     const dataFromDb=await cartegoryModel.findOne({_id:dataId});
     console.log("dataFromDb",dataFromDb);
-    if (data.trim() === '' || /[a-z]/.test(data) || /\d/.test(data)) {
-        req.flash('errorMessage', 'Category name should not contain whitespace, lowercase letters, or number');
-        
-        
+    if (data.trim() === '' || /[a-z]/.test(data) || /\d/.test(data)|| /[!@#$%^&*(),.?":{}|<>]/.test(data)) {
+        req.flash('errorMessage', 'Category name should not contain whitespace, lowercase letters, number or special characters');
         return res.redirect(`/Category/${dataId}`);
     }
-    
+    if(data.length > 15){
+        req.flash('errorMessage', 'Category name should be lessthan or equal to 15 characters long'); 
+        return res.redirect(`/Category/${dataId}`);
+    }
+    if(req.body===data){
+        req.flash('errorMessage','no change have made' );
+            return res.redirect(`/Category/${dataId}`);
+
+    }
+    const existingCategory = await cartegoryModel.findOne({ Category: data });
+        if (existingCategory&&!req.body===data) {
+            req.flash('errorMessage','Category already exists' );
+            return res.redirect(`/Category/${dataId}`);
+        }
     dataFromDb.Category=data;
     const items=null;
     await dataFromDb.save();
@@ -232,64 +269,98 @@ exports.postEditCartegory=async(req,res)=>{
    }
 };
 
-
 exports.postAddproduct = async (req, res) => {
-  try {
-    // Extract necessary data from request body
-    const { productName, description, category, discount, stock, price } = req.body;
+    try {
+        // Extract necessary data from request body
+        const items = await cartegoryModel.find();
+        const { productName, description, cartegory, discount, stock, price } = req.body;
 
-    // Check if files were uploaded
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: "No images uploaded" });
+        if (!productName || !description || !cartegory || !discount || !stock || !price) {
+            return res.render('admin/add-product', { items,error: "All fields are required" });
+        }
+        // Function to check if a string starts with a capital letter
+        function startsWithCapital(str) {
+            return str.charAt(0) === str.charAt(0).toUpperCase();
+        }
+        if (!startsWithCapital(productName)) {
+            return res.render('admin/add-product', { items, error: "Product name must start with a capital letter" });
+        }
+        if ( /^\s/.test(productName)) {
+            return res.render('admin/add-product', { items, error: "Product name must start with a capital letter and cannot begin with white space" });
+        }
+        if (isNaN(discount) || isNaN(stock) || isNaN(price) || discount < 0 || stock < 0 || price < 0 || discount >= 100) {
+            return res.render('admin/add-product', { items, error: "Discount must be a non-negative number less than 100, and stock and price must be non-negative numbers" });
+        }
+        let productImages = [];
+        // Map uploaded files to file URLs
+        if (req.files && req.files.length > 0) {
+            const fileUrls = req.files.map((file) => `/uploads/${file.filename}`);
+            productImages = fileUrls;
+        } else {
+            return res.render('admin/add-product', { items, error: "Please upload the images" });
+        }
+       
+        // Create a new product object with details and images
+        const newProduct = new productMdl({
+            productName: req.body.productName,
+            cartegory: req.body.cartegory,
+            description: req.body.description,
+            images: productImages,
+            stock: req.body.stock,
+            price: req.body.price,
+            discount: req.body.discount
+        });
+
+        // Save the new product to the database
+        await newProduct.save();
+
+        console.log('Product added successfully:', newProduct);
+        res.redirect('/product');
+    } catch (error) {
+        console.error("Error adding product:", error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-
-    let productImages = [];
-    // Map uploaded files to file URLs
-    if (req.files && req.files.length > 0) {
-      const fileUrls = req.files.map((file) => `/uploads/${file.filename}`);
-      productImages = fileUrls;
-    }
-    
-    // Create a new product object with details and images
-    const newProduct = new productMdl({
-      productName,
-      description,
-      category,
-      discount,
-      stock,
-      price,
-      images: productImages,
-    });
-
-    // Save the new product to the database
-    await newProduct.save();
-
-    console.log('Product added successfully:', newProduct);
-    res.redirect('/product');
-  } catch (error) {
-    console.error("Error adding product:", error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
 };
-
-
   
 exports.postEditproduct=async(req,res)=>{
     try{
         const { productName, description, cartegory, discount, stock, price } = req.body;
-        const image=req.body.images;
         const productId=req.params.id
-        console.log(image);
-        let productImage = [];
-        if (req.files || req.files.length >0) {
-            const images = req.files.map((file) => ` /uploads/${file.filename}`);
-            productImage=images
+        console.log("product ID in editing",productId);
+       
+        const currentProductData=await productMdl.findOne({_id:productId})
+
+        const cartegoryProductData=await cartegoryModel.find();
+        if (!productName || !description || !cartegory || !discount || !stock || !price) {
+            return res.render('admin/edit-product', { currentProductData,cartegoryProductData,error: "All fields are required" });
         }
+        // Function to check if a string starts with a capital letter
+        function startsWithCapital(str) {
+            return str.charAt(0) === str.charAt(0).toUpperCase();
+        }
+        if (!startsWithCapital(productName)) {
+            return res.render('admin/edit-product', { currentProductData, cartegoryProductData,error: "Product name must start with a capital letter" });
+        }
+        if (isNaN(discount) || isNaN(stock) || isNaN(price) || discount < 0 || stock < 0 || price < 0 || discount >= 100) {
+            return res.render('admin/edit-product', { currentProductData, cartegoryProductData, error: "Discount must be a non-negative number less than 100, and stock and price must be non-negative numbers" });
+        }
+
+
+        let productImages = [];
+
+        if (req.files && req.files.length > 0) {
+           const fileUrls = req.files.map((file) => `/uploads/${file.filename}`);
+            productImages = fileUrls;
+        }
+
+
+        console.log("product images in editing",productImages);
+        
         await productMdl.findByIdAndUpdate(productId, {
             productName: req.body.productName,
             cartegory: req.body.cartegory,
             description: req.body.description,
-            images: productImage,
+            images: productImages,
             stock: req.body.stock,
             price: req.body.price,
             discount:req.body.discount 

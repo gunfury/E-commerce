@@ -494,6 +494,45 @@ iframe {
     opacity: 1;
   }
 }
+.offcanvas {
+  position: fixed;
+  top: 0;
+  left: -250px; /* Start offcanvas off the screen */
+  width: 250px;
+  height: 100%;
+  background-color: #333;
+  transition: all 0.3s ease;
+}
 
+.offcanvas.open {
+  left: 0; /* Display offcanvas when opened */
+}
+
+.offcanvas-content {
+  margin-left: 250px; /* Adjust content when offcanvas is opened */
+}
+
+/* Other styles */
+.heading_container {
+  margin-top: 50px; /* Adjust margin to accommodate offcanvas */
+}
+
+h2 {
+  color: #fff;
+  text-align: center;
+}
+
+span {
+  color: #ff0;
+}
+
+/* Button to toggle offcanvas */
+.offcanvas-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  cursor: pointer;
+  color: #fff;
+}
 
 

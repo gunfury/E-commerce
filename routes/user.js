@@ -13,6 +13,11 @@ gethomepage,
 getotp,
 getresendotp,
 getuserlogout,
+getuserSideProduct,
+
+
+
+
 postOtp,
 postsignup,
 postlogin
@@ -23,10 +28,11 @@ postlogin
 //get methods
 router.get('/',getlogin);
 router.get('/signup',getsignup);
-router.get('/home',gethomepage);
+router.get('/home',userSession,gethomepage);
 router.get('/otp',getotp);
 router.get('/resend',getresendotp);
 router.get('/userlogout',userSession,getuserlogout)
+router.get('/userSideProduct',userSession,getuserSideProduct)
 
 
 

@@ -1,5 +1,4 @@
 const userData=require('../models/signupModel')
-
 async function userSession(req,res,next){
     const user=await userData.find({_id:req.session.user})
     console.log("session",req.session.user);

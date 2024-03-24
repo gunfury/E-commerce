@@ -28,8 +28,9 @@ const productSchema=new mongoose.Schema({
     discount:{
         type:String
     },
-    action:{
-        type:String
+    isBlocked: {
+        type: Boolean,
+        default: false // Assuming categories are initially not blocked
     }
 
 });

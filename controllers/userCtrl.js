@@ -1,9 +1,11 @@
 const express=require("express");
 const router= express();
 const bcrypt = require('bcrypt');
-const signupcollection=require('../models/signupModel')
-const otpCollection=require('../models/otpModel')
-const  nodemailer=require('nodemailer');
+const signupcollection=require('../models/signupModel');
+const otpCollection=require('../models/otpModel');
+const nodemailer=require('nodemailer');
+const productMdl=require('../models/admin/productModel');
+require('dotenv').config();
 
 
 
@@ -15,7 +17,7 @@ const mailSender = async (email, title, body) => {
         service: "gmail",
         auth: {
           user: "unnivishnu18@gmail.com",
-          pass: "ahbv ayzt nmrv fshv ",
+          pass: "ahbv ayzt nmrv fshv",
         },
       });
   
@@ -83,13 +85,18 @@ exports.getresendotp=async (req, res) => {
     }
 }
 
-exports.gethomepage=(req,res)=>{
-    res.render("user/home");
+exports.gethomepage=async(req,res)=>{
+    const productDisplay=await productMdl.find();
+    res.render("user/home",{productDisplay});
 }
 
 exports.getuserlogout=(req,res)=>{
    delete req.session.user;
     res.redirect("/");
+}
+exports.getuserSideProduct=async(req,res)=>{
+    const productDisplay=await productMdl.find();
+    res.render('user/product',{productDisplay});
 }
                                                       // POST Method
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,10 +106,12 @@ exports.getuserlogout=(req,res)=>{
 exports.postlogin = async (req, res) => {
     const { email, pass } = req.body;
     console.log("aaaaaa",req.body);
+    hashedpass=await bcrypt.hash(pass, 10);
+    console.log(hashedpass);
     try {
         const user = await signupcollection.findOne({
             email: email,
-            password: pass
+            password:pass
         });
         
 
@@ -137,7 +146,9 @@ exports.postlogin = async (req, res) => {
 
 
 exports.postsignup=async (req,res)=>{
-        const{username,email,password,confirmPassword}=req.body
+        
+        try {
+            const{username,email,password,confirmPassword}=req.body
         console.log("datas" ,req.body);
         if (!username || !email || !password) {
             return res.render("user/signup",{ message: "All fields are required" });
@@ -145,24 +156,36 @@ exports.postsignup=async (req,res)=>{
         if (username.trim() !== username) {
             return res.render("user/signup",{ message: "Username should not start with whitespace" });
         }
+       
+
         // Validate email format
         const emailRegex = /\S+@\S+\.\S+/;
         if (!emailRegex.test(email)) {
             return res.render("user/signup",{ message: "Invalid email address" });
         }
+        const strongPasswordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+        if (!strongPasswordRegex.test(password)) {
+            return res.render("user/signup", { message: "Password should be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character" });
+        }
         if (password !== confirmPassword) {
             return res.render("user/signup",{ message: "Password and confirm password do not match" });
         }
-        try {
+            const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>]/;
+        if (specialCharsRegex.test(username)) {
+            return res.render("user/signup", { message: "Username should not contain special characters" });
+        }
             const existingUser = await signupcollection.findOne({ email });
             if (existingUser) {
               return res.render("user/signup", { message: "User Already exists" });
             }
+             // Hashing the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
             const generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
                 req.session.signupData = {
                 username,
                 email,
-                password// password:await bcrypt.hash(password,10)    
+                password
                 };
                 const newOTP = new otpCollection({
                 username,
