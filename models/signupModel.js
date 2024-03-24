@@ -15,6 +15,9 @@ const signupSchema= new mongoose.Schema({
        
 
     } ,
+    images: {
+        type:[String]
+    },
     isBlocked:{
         type:Boolean,
         default:false

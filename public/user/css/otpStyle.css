@@ -11,7 +11,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: green;
+  background: rgb(248, 250, 248);
 }
 :where(.container, form, .input-field, header) {
   display: flex;
@@ -29,7 +29,7 @@ body {
 .container header {
   height: 65px;
   width: 65px;
-  background: green;
+  background:#f7444e;
   color: #fff;
   font-size: 2.5rem;
   border-radius: 50%;
@@ -69,13 +69,13 @@ form button {
   cursor: pointer;
   border-radius: 6px;
   pointer-events: none;
-  background: green;
+  background: #f7444e;
   transition: all 0.2s ease;
 }
 form button.active {
-  background: green;
+  background: #f7444e;
   pointer-events: auto;
 }
 form button:hover {
-  background: green;
+  background: #f7444e;
 }

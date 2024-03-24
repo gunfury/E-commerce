@@ -20,16 +20,17 @@ const productSchema=new mongoose.Schema({
     },
 
     stock:{
-        type:String
+        type:Number
     },
     price:{
-        type:String
+        type:Number
     },
     discount:{
         type:String
     },
-    action:{
-        type:String
+    isBlocked: {
+        type: Boolean,
+        default: false // Assuming categories are initially not blocked
     }
 
 });

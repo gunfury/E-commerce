@@ -1,9 +1,12 @@
 const express=require("express");
 const router= express();
 const bcrypt = require('bcrypt');
-const signupcollection=require('../models/signupModel')
-const otpCollection=require('../models/otpModel')
-const  nodemailer=require('nodemailer');
+const signupcollection=require('../models/signupModel');
+const otpCollection=require('../models/otpModel');
+const nodemailer=require('nodemailer');
+const productMdl=require('../models/admin/productModel');
+const categoryMdl=require('../models/admin/categoryModel');
+require('dotenv').config();
 
 
 
@@ -15,7 +18,7 @@ const mailSender = async (email, title, body) => {
         service: "gmail",
         auth: {
           user: "unnivishnu18@gmail.com",
-          pass: "ahbv ayzt nmrv fshv ",
+          pass: "ahbv ayzt nmrv fshv",
         },
       });
   
@@ -35,6 +38,7 @@ const mailSender = async (email, title, body) => {
 
 
 
+
                                                       //  GET Method
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,9 +46,13 @@ const mailSender = async (email, title, body) => {
 
 
 exports.getlogin=(req,res)=>{
+    if(!req.session.user){
     const errorMessage = req.session.message;
     delete req.session.message;
     res.render("user/login", { message: "" });
+    }else{
+        res.redirect("/home");
+    }
 }
 
 exports.getsignup=(req,res)=>{
@@ -83,14 +91,89 @@ exports.getresendotp=async (req, res) => {
     }
 }
 
-exports.gethomepage=(req,res)=>{
-    res.render("user/home");
+exports.gethomepage=async(req,res)=>{
+    const productDisplay=await productMdl.find();
+    res.render("user/home",{productDisplay});
 }
 
 exports.getuserlogout=(req,res)=>{
    delete req.session.user;
     res.redirect("/");
 }
+
+
+exports.getuserSideProduct = async (req, res) => {
+    try {
+        const sortType = req.params.sortType;
+        console.log("sort type", sortType);
+        const categoryData = await categoryMdl.find();
+        console.log("data type", categoryData);
+
+        let productDisplay;
+
+        // Find the category matching the sortType
+        const category = categoryData.find(cat => cat.Category === sortType);
+
+        if (category) {
+            // If category found, filter products by category
+            productDisplay = await productMdl.find({ cartegory: category.Category });
+        } else {
+            // If category not found, handle it based on sortType
+            switch (sortType) {
+                case 'aA-zZ':
+                    productDisplay = await productMdl.find().sort({ productName: 1 });
+                    break;
+                case 'zZ-aA':
+                    productDisplay = await productMdl.find().sort({ productName: -1 });
+                    break;
+                case 'Low-High':
+                    productDisplay = await productMdl.find().sort({ price: -1 });
+                    break;
+                case 'High-Low':
+                    productDisplay = await productMdl.find().sort({ price: 1 });
+                    break;
+                case 'new-arrivals':
+                    productDisplay = await productMdl.find().sort({ _id: -1 });
+                    break;
+                case 'old-arrivals':
+                    productDisplay = await productMdl.find();
+                    break;
+                case 'category1':
+                    // Sort products by category 1
+                    productDisplay = await productMdl.find({ cartegory: 'category1' }).sort({ productName: 1 });
+                    break;
+                case 'category2':
+                    // Sort products by category 2
+                    productDisplay = await productMdl.find({ cartegory: 'category2' }).sort({ productName: 1 });
+                    break;
+                // Add more cases for other categories as needed
+                default:
+                    // If sortType is not recognized, return all products
+                    productDisplay = await productMdl.find();
+                    break;
+            }
+        }
+
+        res.render('user/product', { productDisplay, categoryData });
+    } catch (error) {
+        console.error(error);
+        // Handle error
+        res.status(500).send("Internal Server Error");
+    }
+};
+
+
+
+exports.getproductDetails=async(req,res)=>{
+    const productID=req.params.id;
+    const productDetails=await productMdl.findById({_id:productID})
+    const categoryData=await categoryMdl.find();
+    
+    
+    
+    res.render('user/productdetails',{productDetails});
+}
+
                                                       // POST Method
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,11 +181,12 @@ exports.getuserlogout=(req,res)=>{
 
 exports.postlogin = async (req, res) => {
     const { email, pass } = req.body;
-    console.log("aaaaaa",req.body);
+    hashedpass=await bcrypt.hash(pass, 10);
+
     try {
         const user = await signupcollection.findOne({
             email: email,
-            password: pass
+            password:pass
         });
         
 
@@ -137,7 +221,9 @@ exports.postlogin = async (req, res) => {
 
 
 exports.postsignup=async (req,res)=>{
-        const{username,email,password,confirmPassword}=req.body
+        
+        try {
+            const{username,email,password,confirmPassword}=req.body
         console.log("datas" ,req.body);
         if (!username || !email || !password) {
             return res.render("user/signup",{ message: "All fields are required" });
@@ -145,24 +231,36 @@ exports.postsignup=async (req,res)=>{
         if (username.trim() !== username) {
             return res.render("user/signup",{ message: "Username should not start with whitespace" });
         }
+       
+
         // Validate email format
         const emailRegex = /\S+@\S+\.\S+/;
         if (!emailRegex.test(email)) {
             return res.render("user/signup",{ message: "Invalid email address" });
         }
+        const strongPasswordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+        if (!strongPasswordRegex.test(password)) {
+            return res.render("user/signup", { message: "Password should be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character" });
+        }
         if (password !== confirmPassword) {
             return res.render("user/signup",{ message: "Password and confirm password do not match" });
         }
-        try {
+            const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>]/;
+        if (specialCharsRegex.test(username)) {
+            return res.render("user/signup", { message: "Username should not contain special characters" });
+        }
             const existingUser = await signupcollection.findOne({ email });
             if (existingUser) {
               return res.render("user/signup", { message: "User Already exists" });
             }
+             // Hashing the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
             const generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
                 req.session.signupData = {
                 username,
                 email,
-                password// password:await bcrypt.hash(password,10)    
+                password
                 };
                 const newOTP = new otpCollection({
                 username,
