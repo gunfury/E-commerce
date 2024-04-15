@@ -139,6 +139,7 @@ color: white; /* Change to desired text color */
                             
                             <td><%=item.username%></td>
                             <td><%=item.email%></td>
+<<<<<<< HEAD
                             <td> 
                                 <a href="#" onclick="return confirmAction('<%= item._id %>', '<%= item.isBlocked %>');">
                                     <button class="toggle-button <%= item.isBlocked ? 'unblocked-user' : 'blocked-user' %>" style="border-radius: 20px;">
@@ -161,6 +162,25 @@ color: white; /* Change to desired text color */
                           
                                 
                            
+=======
+                            <td> <form id="blockForm" action="/userblock/<%= item._id %>" method="POST">
+                                <button id="blockButton" type="button" class="toggle-button <%= item.isBlocked ? 'unblocked-user' : 'blocked-user' %>" style="border-radius: 20px;">
+                                    <% if (item.isBlocked) { %>
+                                        Unblock
+                                    <% } else { %>
+                                        Block
+                                    <% } %>
+                                </button>
+                            </form>
+                            
+                            <script>
+                                document.getElementById('blockButton').addEventListener('click', function() {
+                                    if (confirm('Are you sure you want to change the user status?')) {
+                                        document.getElementById('blockForm').submit();
+                                    }
+                                });
+                            </script>
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
                             </td>
                             
                         </tr>
@@ -214,6 +234,45 @@ color: white; /* Change to desired text color */
             });
         })
 
+<<<<<<< HEAD
+=======
+    
+    // Get the toggle button
+    const toggleButton = document.getElementById('toggleButton');
+    // Get the modal
+    const modal = document.getElementById('confirmationModal');
+    // Get the confirm button inside the modal
+    const confirmButton = document.getElementById('confirmButton');
+    // Get the form
+    const form = document.getElementById('userBlockForm');
+
+    // Function to show the modal
+    function showModal() {
+        modal.style.display = 'block';
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    // When the toggle button is clicked, show the modal
+    toggleButton.addEventListener('click', function() {
+        showModal();
+    });
+
+    // When the confirm button in the modal is clicked, submit the form
+    confirmButton.addEventListener('click', function() {
+        form.submit();
+    });
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
     </script>
           <script>
             function confirmAction(itemId, isBlocked) {

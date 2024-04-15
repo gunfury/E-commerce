@@ -136,7 +136,13 @@ exports.getDeleteproduct=async(req,res)=>{
 exports.getSoftDeleteProduct=async(req,res)=>{
     try{
     const productId=req.params.id;
+<<<<<<< HEAD
     const data=await productMdl.findById({_id:productId})
+=======
+    console.log("productId",productId);
+    const data=await productMdl.findById({_id:productId})
+    console.log("data",data);
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
     data.isBlocked=!data.isBlocked;
     await data.save();
     res.redirect('/product')
@@ -145,6 +151,7 @@ exports.getSoftDeleteProduct=async(req,res)=>{
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+<<<<<<< HEAD
 exports.getBlockUser=async(req,res)=>{
     try{
        
@@ -201,6 +208,8 @@ exports.postfetchOrderStatusUpdate = async (req, res) => {
 }
 
 
+=======
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
 
 
 
@@ -228,6 +237,26 @@ exports.postAdminLogin=(req,res)=>{
             return res.render('admin/login',{errorMessage:'Please provide both username and password'});
          }
        return res.render('admin/login',{errorMessage:'Invalid user or password'});
+<<<<<<< HEAD
+=======
+    }
+    
+}
+exports.postBlockUser=async(req,res)=>{
+    const userId = req.params.Id;
+     try{
+        const User=await user.findById(userId);
+        if(!User){
+            return res.status(404).json({ message: "User not found" });
+        }
+        User.isBlocked=!User.isBlocked;
+        await User.save();
+        console.log('vghaca')
+        res.redirect('/userManagement')
+    }catch (error){
+        console.error("Error blocking/unblocking user:", error);
+        res.status(500).send("Internal Server Error");
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
     }
     
 }
@@ -278,12 +307,25 @@ exports.postEditCartegory=async(req,res)=>{
         req.flash('errorMessage', 'Category name should be lessthan or equal to 15 characters long'); 
         return res.redirect(`/Category/${dataId}`);
     }
+<<<<<<< HEAD
     const existingCategory = await cartegoryModel.findOne({ Category: data });
         if (existingCategory) {
             req.flash('errorMessage','Category already exists' );
             return res.redirect(`/Category/${dataId}`);
         }
        
+=======
+    if(req.body===data){
+        req.flash('errorMessage','no change have made' );
+            return res.redirect(`/Category/${dataId}`);
+
+    }
+    const existingCategory = await cartegoryModel.findOne({ Category: data });
+        if (existingCategory&&!req.body===data) {
+            req.flash('errorMessage','Category already exists' );
+            return res.redirect(`/Category/${dataId}`);
+        }
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
     dataFromDb.Category=data;
     const items=null;
     await dataFromDb.save();

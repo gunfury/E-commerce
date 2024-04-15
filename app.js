@@ -30,7 +30,11 @@ app.use(flash());
 //mongoDB connecting
 
 const mongoURl=process.env.MONGODB_URI;
+<<<<<<< HEAD
 mongoose.connect(mongoURl)
+=======
+mongoose.connect(mongoURl, { useNewUrlParser: true, useUnifiedTopology: true })
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
   .then(() => {
     console.log('MongoDB connected successfully');
   })

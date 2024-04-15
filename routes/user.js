@@ -15,9 +15,12 @@ getotp,
 getresendotp,
 getuserlogout,
 getuserSideProduct,
+<<<<<<< HEAD
 getproductDetails,
 getUserProfile,
 getUserAddress,
+=======
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
 
 
 
@@ -36,9 +39,13 @@ router.get('/home',userSession,gethomepage);
 router.get('/otp',getotp);
 router.get('/resend',getresendotp);
 router.get('/userlogout',userSession,getuserlogout)
+<<<<<<< HEAD
 router.get('/userSideProduct/:sortType',userSession,getuserSideProduct)
 router.get('/showproductdetails/:id',userSession,getproductDetails)
 
+=======
+router.get('/userSideProduct',userSession,getuserSideProduct)
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
 
 
 

@@ -5,7 +5,10 @@ const signupcollection=require('../models/signupModel');
 const otpCollection=require('../models/otpModel');
 const nodemailer=require('nodemailer');
 const productMdl=require('../models/admin/productModel');
+<<<<<<< HEAD
 const categoryMdl=require('../models/admin/categoryModel');
+=======
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
 require('dotenv').config();
 
 
@@ -100,6 +103,7 @@ exports.getuserlogout=(req,res)=>{
    delete req.session.user;
     res.redirect("/");
 }
+<<<<<<< HEAD
 
 
 exports.getuserSideProduct = async (req, res) => {
@@ -174,6 +178,12 @@ exports.getproductDetails=async(req,res)=>{
     res.render('user/productdetails',{productDetails});
 }
 
+=======
+exports.getuserSideProduct=async(req,res)=>{
+    const productDisplay=await productMdl.find();
+    res.render('user/product',{productDisplay});
+}
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
                                                       // POST Method
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,8 +191,14 @@ exports.getproductDetails=async(req,res)=>{
 
 exports.postlogin = async (req, res) => {
     const { email, pass } = req.body;
+<<<<<<< HEAD
     hashedpass=await bcrypt.hash(pass, 10);
 
+=======
+    console.log("aaaaaa",req.body);
+    hashedpass=await bcrypt.hash(pass, 10);
+    console.log(hashedpass);
+>>>>>>> 3d5b6b401923d1bcb94ae57e96308a3d8f6462e1
     try {
         const user = await signupcollection.findOne({
             email: email,
